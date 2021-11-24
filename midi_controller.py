@@ -51,7 +51,7 @@ fpga.configure(device_name="ArtyS7")
 # set output pins
 wf.static.set_mode(device_handle, MUX_ADDR_0, output=True)
 wf.static.set_mode(device_handle, MUX_ADDR_1, output=True)
-# set all pins to LOW
+# set all static outputs to LOW
 wf.static.set_state(device_handle, MUX_ADDR_0, False)
 wf.static.set_state(device_handle, MUX_ADDR_1, False)
 
