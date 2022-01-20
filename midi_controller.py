@@ -36,7 +36,7 @@ NEG_REF_CH = 2
 """-----------------------------------------------------------------------"""
 
 # connect to the device
-device_handle, device_name = wf.device.open()
+device_handle, device_name = wf.device.open("Analog Discovery Pro 3X50")
 
 # check for connection errors
 wf.device.check_error(device_handle)
