@@ -48,6 +48,55 @@ LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue"
 
 """-----------------------------------------------------------------------"""
 
+# global variables
+class data:
+    class switch:
+        play = False
+        record = False
+    class potentiometer:
+        class filter:
+            high = 0
+            middle = 0
+            low = 0
+        class effect:
+            a = 0
+            b = 0
+            c = 0
+            d = 0
+            e = 0
+            f = 0
+    class encoder:
+        modulation = 0
+        channel = 0
+        octave = 0
+        class timing:
+            attack = 0
+            release = 0
+    class key:
+        c = False
+        cS = False
+        d = False
+        dS = False
+        e = False
+        f = False
+        fS = False
+        g = False
+        gS = False
+        a = False
+        aS = False
+        b = False
+    class drumpad:
+        a = 0
+        b = 0
+        c = 0
+        d = 0
+        e = 0
+        f = 0
+        g = 0
+        h = 0
+
+"""-----------------------------------------------------------------------"""
+
 # connect to the device
 device_handle, device_name = wf.device.open("Analog Discovery Pro 3X50")
 
@@ -104,9 +153,9 @@ try:
         # send out MIDI data
 
         # set LED color
-        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["red"])
-        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["green"])
-        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["blue"])
+        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["red"])
+        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["green"])
+        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["blue"])
 
 except:
     # exit on Ctrl+C
