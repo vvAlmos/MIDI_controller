@@ -105,6 +105,7 @@ GS = 8  # G#
 A = 9
 AS = 10  # A#
 B = 11
+notes = [C, CS, D, DS, E, F, FS, G, GS, A, AS, B]
 
 """-------------------------------------------------------------------"""
 """ OCTAVES """
@@ -121,6 +122,7 @@ LINE3_O = 84    # 3-line, starting with C6
 LINE4_O = 96   # 4-line, starting with C7
 LINE5_O = 108   # 5-line, starting with C8
 LINE6_O = 120   # 6-line, starting with C9
+octaves = [DBL_CONTRA_O, SUB_CONTRA_O, CONTRA_O, GREAT_O, SMALL_O, LINE1_O, LINE2_O, LINE3_O, LINE4_O, LINE5_O, LINE6_O]
 
 """-------------------------------------------------------------------"""
 """ CHANNELS """
@@ -142,6 +144,7 @@ CH13 = 12
 CH14 = 13
 CH15 = 14
 CH16 = 15
+channels = [CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8, CH9, CH10, CH11, CH12, CH13, CH14, CH15, CH16]
 
 """-------------------------------------------------------------------"""
 """ CONTROL MESSAGES """
