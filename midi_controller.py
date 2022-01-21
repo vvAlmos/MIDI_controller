@@ -35,6 +35,19 @@ NEG_REF_CH = 2
 
 """-----------------------------------------------------------------------"""
 
+# other parameters
+LED_frequency = 1e03    # in Hz
+PWM_frequency = 100e03  # in Hz
+# different LED colors for different MIDI channels
+LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue": 0}, {"red": 0, "green": 0, "blue": 100},
+            {"red": 100, "green": 100, "blue": 0}, {"red": 100, "green": 0, "blue": 100}, {"red": 0, "green": 100, "blue": 100},
+            {"red": 50, "green": 100, "blue": 0}, {"red": 50, "green": 0, "blue": 100}, {"red": 100, "green": 50, "blue": 0},
+            {"red": 0, "green": 50, "blue": 100}, {"red": 100, "green": 0, "blue": 50}, {"red": 0, "green": 100, "blue": 50},
+            {"red": 100, "green": 25, "blue": 25}, {"red": 25, "green": 100, "blue": 25}, {"red": 25, "green": 25, "blue": 100},
+            {"red": 100, "green": 100, "blue": 100}]
+
+"""-----------------------------------------------------------------------"""
+
 # connect to the device
 device_handle, device_name = wf.device.open("Analog Discovery Pro 3X50")
 
@@ -66,16 +79,45 @@ wf.supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
 
 # start generating the reference signals
 # PWM reference
-wf.wavegen.generate(device_handle, PWM_REF_CH, wf.wavegen.function.ramp_up, offset=1.65, amplitude=1.65, frequency=100e03, symmetry=100)
+wf.wavegen.generate(device_handle, PWM_REF_CH, wf.wavegen.function.ramp_up, offset=1.65, amplitude=1.65, frequency=PWM_frequency, symmetry=100)
 # -5V reference
 wf.wavegen.generate(device_handle, NEG_REF_CH, wf.wavegen.function.dc, -5)
 
 """-----------------------------------"""
 
+try:
+    # initialize the iteration counter
+    iteration_cnt = 0
 
+    # main loop
+    while True:
+        # increment the iteration counter
+        iteration_cnt += 1
 
+        # set current MUX address
+        mux_address = iteration_cnt % 4
+        wf.static.set_state(device_handle, MUX_ADDR_0, mux_address & 1)
+        wf.static.set_state(device_handle, MUX_ADDR_1, mux_address & 2)
+
+        # get controller data
+
+        # send out MIDI data
+
+        # set LED color
+        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["red"])
+        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["green"])
+        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[MIDI_channel]["blue"])
+
+except:
+    # exit on Ctrl+C
+    pass
 
 """-----------------------------------"""
+
+# turn off LEDs
+wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=0)
+wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=0)
+wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=0)
 
 # reset WF instruments
 wf.wavegen.close(device_handle)
