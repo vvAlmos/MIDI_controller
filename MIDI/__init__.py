@@ -11,6 +11,7 @@ import sys  # interactions with the interpreter
 import socket   # socket operations
 import struct   # conversion between Python values and C type data
 from subprocess import Popen, PIPE # system calls
+from message import *   # import all MIDI messages
 
 sock = None
 
