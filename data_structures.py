@@ -2,6 +2,17 @@ import MIDI as midi
 
 """-----------------------------------------------------------------------"""
 
+class supplies_state:
+    # power supply control data
+    def __init__(self, device_name, state, voltage):
+        self.device_name = device_name
+        self.master_state = state
+        self.state = state
+        self.voltage = voltage
+        return
+
+"""-----------------------------------------------------------------------"""
+
 class data_object:
     # object template
     def __init__(self, message, change=False, value=0):

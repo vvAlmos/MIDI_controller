@@ -2,7 +2,7 @@ import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Star
 import MIDI as midi     # import MIDI commands and messages
 import FPGA as fpga
 
-from data_structures import controller_data
+from data_structures import controller_data, supplies_state
 from functions import read_digital_data, read_analog_data, write_data
 from parameters import *
 
@@ -38,12 +38,8 @@ wf.scope.open(device_handle)
 wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
 
 # turn on the power supply
-class supplies_state:
-    device_name = device_name
-    master_state = True
-    state = True
-    voltage = 3.3
-wf.supplies.switch(device_handle, supplies_state)
+supply_state = supplies_state(device_name, True, 3.3)
+wf.supplies.switch(device_handle, supply_state)
 
 # start generating the reference signals
 # PWM reference
@@ -101,8 +97,8 @@ wf.pattern.close(device_handle)
 wf.logic.close(device_handle)
 wf.scope.close(device_handle)
 wf.static.close(device_handle)
-supplies_state.master_state = False
-wf.supplies.switch(device_handle, supplies_state)
+supply_state.state = False
+wf.supplies.switch(device_handle, supply_state)
 wf.supplies.close(device_handle)
 
 # close raveloxmidi
