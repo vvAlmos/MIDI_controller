@@ -1,3 +1,7 @@
+"""
+The functions used in the main wrapper and the auxiliary functions are defined in this file
+"""
+
 import WF_SDK as wf
 import MIDI as midi
 from parameters import *

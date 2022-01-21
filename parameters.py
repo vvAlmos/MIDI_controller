@@ -1,3 +1,7 @@
+"""
+Edit the script parameters in this file
+"""
+
 import MIDI as midi
 
 """-----------------------------------------------------------------------"""
