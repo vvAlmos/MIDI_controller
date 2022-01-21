@@ -229,58 +229,70 @@ def binary_to_decimal(bits):
 """-----------------------------------------------------------------------"""
 
 # auxiliary function
+def change_object(object, value):
+    # change controller data parameter
+    if object.value != value:
+        object.value = value
+        object.change = True
+    else:
+        object.change = False
+    return object
+
+"""-----------------------------------------------------------------------"""
+
+# auxiliary function
 def read_data(device_handle, mux_address):
     if mux_address == 0:
         # MUX address = 0
-        data.switch.play = wf.static.get_state(device_handle, MUX_0)    # play / pause
-        data.switch.record = wf.static.get_state(device_handle, MUX_1)  # record / stop
-        data.potentiometer.volume = pwm_to_analog(device_handle, MUX_2)    # volume
+        data.switch.play = change_object(data.switch.play, wf.static.get_state(device_handle, MUX_0))    # play / pause
+        data.switch.record = change_object(data.switch.record, wf.static.get_state(device_handle, MUX_1))    # record / stop
+        data.potentiometer.volume = change_object(data.potentiometer.volume, pwm_to_analog(device_handle, MUX_2))  # volume
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
-        data.encoder.channel = binary_to_decimal(bits)  # channel
-        data.key.c = wf.static.get_state(device_handle, MUX_7)  # piano key 1
-        data.key.e = wf.static.get_state(device_handle, MUX_8)  # piano key 5
-        data.key.gS = wf.static.get_state(device_handle, MUX_9) # piano key 9
+        data.encoder.channel = change_object(data.encoder.channel, binary_to_decimal(bits))  # channel
+        data.key.c = change_object(data.key.c, wf.static.get_state(device_handle, MUX_7))    # piano key 1
+        data.key.e = change_object(data.key.e, wf.static.get_state(device_handle, MUX_8))    # piano key 5
+        data.key.gS = change_object(data.key.gS, wf.static.get_state(device_handle, MUX_9))  # piano key 9
 
     elif mux_address == 1:
         # MUX address = 1
-        data.potentiometer.filter.high = pwm_to_analog(device_handle, MUX_0)      # high filter
-        data.potentiometer.filter.middle = pwm_to_analog(device_handle, MUX_1)    # middle filter
-        data.potentiometer.filter.low = pwm_to_analog(device_handle, MUX_2)       # low filter
+        data.potentiometer.filter.high = change_object(data.potentiometer.filter.high, pwm_to_analog(device_handle, MUX_0))        # high filter
+        data.potentiometer.filter.middle = change_object(data.potentiometer.filter.middle, pwm_to_analog(device_handle, MUX_1))    # middle filter
+        data.potentiometer.filter.low = change_object(data.potentiometer.filter.low, pwm_to_analog(device_handle, MUX_2))          # low filter
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
-        data.encoder.modulation = binary_to_decimal(bits) / 15 * 127  # modulation
-        data.key.d = wf.static.get_state(device_handle, MUX_7)   # piano key 2
-        data.key.fS = wf.static.get_state(device_handle, MUX_8)  # piano key 6
-        data.key.aS = wf.static.get_state(device_handle, MUX_9)  # piano key 10
+        data.encoder.modulation = change_object(data.encoder.modulation, binary_to_decimal(bits) / 15 * 127)  # modulation
+        data.key.d = change_object(data.key.d, wf.static.get_state(device_handle, MUX_7))    # piano key 2
+        data.key.fS = change_object(data.key.fS, wf.static.get_state(device_handle, MUX_8))  # piano key 6
+        data.key.aS = change_object(data.key.aS, wf.static.get_state(device_handle, MUX_9))  # piano key 10
 
     elif mux_address == 2:
         # MUX address = 2
-        data.potentiometer.effect.a = pwm_to_analog(device_handle, MUX_0)    # effect 1
-        data.potentiometer.effect.b = pwm_to_analog(device_handle, MUX_1)    # effect 2
-        data.potentiometer.effect.c = pwm_to_analog(device_handle, MUX_2)    # effect 3
+        data.potentiometer.effect.a = change_object(data.potentiometer.effect.a, pwm_to_analog(device_handle, MUX_0))  # effect 1
+        data.potentiometer.effect.b = change_object(data.potentiometer.effect.b, pwm_to_analog(device_handle, MUX_1))  # effect 2
+        data.potentiometer.effect.c = change_object(data.potentiometer.effect.c, pwm_to_analog(device_handle, MUX_2))  # effect 3
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
         decimal_value = binary_to_decimal(bits) / 15 * 127
         if wf.static.get_state(device_handle, MUX_10):
-            data.encoder.timing.attack = decimal_value  # attack time
+            data.encoder.timing.attack = change_object(data.encoder.timing.attack, decimal_value)   # attack time
         else:
-            data.encoder.timing.release = decimal_value # release time
-        data.key.cS = wf.static.get_state(device_handle, MUX_7)  # piano key 3
-        data.key.f = wf.static.get_state(device_handle, MUX_8)   # piano key 7
-        data.key.a = wf.static.get_state(device_handle, MUX_9)   # piano key 11
+            data.encoder.timing.release = change_object(data.encoder.timing.release, decimal_value) # release time
+        data.key.cS = change_object(data.key.cS, wf.static.get_state(device_handle, MUX_7))  # piano key 3
+        data.key.f = change_object(data.key.f, wf.static.get_state(device_handle, MUX_8))    # piano key 7
+        data.key.a = change_object(data.key.a, wf.static.get_state(device_handle, MUX_9))    # piano key 11
 
     else:
         # MUX address = 3
-        data.potentiometer.effect.d = pwm_to_analog(device_handle, MUX_0)    # effect 4
-        data.potentiometer.effect.f = pwm_to_analog(device_handle, MUX_1)    # effect 5
-        data.potentiometer.effect.c = pwm_to_analog(device_handle, MUX_2)    # effect 6
+        data.potentiometer.effect.d = change_object(data.potentiometer.effect.d, pwm_to_analog(device_handle, MUX_0))    # effect 4
+        data.potentiometer.effect.e = change_object(data.potentiometer.effect.e, pwm_to_analog(device_handle, MUX_1))    # effect 5
+        data.potentiometer.effect.f = change_object(data.potentiometer.effect.f, pwm_to_analog(device_handle, MUX_2))    # effect 6
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
-        data.encoder.octave = binary_to_decimal(bits)   # modulation
-        data.key.dS = wf.static.get_state(device_handle, MUX_7)  # piano key 4
-        data.key.g = wf.static.get_state(device_handle, MUX_8)   # piano key 8
-        data.key.b = wf.static.get_state(device_handle, MUX_9)   # piano key 12
+        data.encoder.octave = change_object(data.encoder.octave, binary_to_decimal(bits))    # modulation
+        data.key.dS = change_object(data.key.dS, wf.static.get_state(device_handle, MUX_7))  # piano key 4
+        data.key.g = change_object(data.key.g, wf.static.get_state(device_handle, MUX_8))    # piano key 8
+        data.key.b = change_object(data.key.b, wf.static.get_state(device_handle, MUX_9))    # piano key 12
 
     return
 
@@ -288,8 +300,9 @@ def read_data(device_handle, mux_address):
 
 # auxiliary function
 def write_data():
-    # define octave
-    octave = midi.octaves[data.encoder.channel.value]
+    # define channel and octave
+    channel = data.encoder.channel.value
+    octave = midi.octaves[channel]
 
     
     return
