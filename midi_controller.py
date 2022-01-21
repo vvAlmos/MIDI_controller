@@ -1,6 +1,7 @@
 import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Started
 import MIDI as midi     # import MIDI commands and messages
-import FPGA as fpga     # import FPGA commands
+import FPGA as fpga
+from MIDI.message import CTRL_CHG     # import FPGA commands
 
 """-----------------------------------------------------------------------"""
 
@@ -38,6 +39,8 @@ NEG_REF_CH = 2
 # other parameters
 LED_frequency = 1e03    # in Hz
 PWM_frequency = 100e03  # in Hz
+note_velocity = 127     # between 0 and 127
+drum_channel = midi.CH10
 # different LED colors for different MIDI channels
 LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue": 0}, {"red": 0, "green": 0, "blue": 100},
             {"red": 100, "green": 100, "blue": 0}, {"red": 100, "green": 0, "blue": 100}, {"red": 0, "green": 100, "blue": 100},
@@ -52,11 +55,11 @@ LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue"
 class data:
     class switch:
         class play:
-            value = False
+            value = 0
             change = False
             message = midi.ON_OFF_SWC[0]
         class record:
-            value = False
+            value = 0
             change = False
             message = midi.ON_OFF_SWC[1]
     class potentiometer:
@@ -244,8 +247,10 @@ def change_object(object, value):
 def read_data(device_handle, mux_address):
     if mux_address == 0:
         # MUX address = 0
-        data.switch.play = change_object(data.switch.play, wf.static.get_state(device_handle, MUX_0))    # play / pause
-        data.switch.record = change_object(data.switch.record, wf.static.get_state(device_handle, MUX_1))    # record / stop
+        temp = 127 if wf.static.get_state(device_handle, MUX_0) else 0
+        data.switch.play = change_object(data.switch.play, temp)    # play / pause
+        temp = 127 if wf.static.get_state(device_handle, MUX_1) else 0
+        data.switch.record = change_object(data.switch.record, temp)    # record / stop
         data.potentiometer.volume = change_object(data.potentiometer.volume, pwm_to_analog(device_handle, MUX_2))  # volume
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
@@ -261,7 +266,7 @@ def read_data(device_handle, mux_address):
         data.potentiometer.filter.low = change_object(data.potentiometer.filter.low, pwm_to_analog(device_handle, MUX_2))          # low filter
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
-        data.encoder.modulation = change_object(data.encoder.modulation, binary_to_decimal(bits) / 15 * 127)  # modulation
+        data.encoder.modulation = change_object(data.encoder.modulation, round(binary_to_decimal(bits) / 15 * 127))  # modulation
         data.key.d = change_object(data.key.d, wf.static.get_state(device_handle, MUX_7))    # piano key 2
         data.key.fS = change_object(data.key.fS, wf.static.get_state(device_handle, MUX_8))  # piano key 6
         data.key.aS = change_object(data.key.aS, wf.static.get_state(device_handle, MUX_9))  # piano key 10
@@ -273,7 +278,7 @@ def read_data(device_handle, mux_address):
         data.potentiometer.effect.c = change_object(data.potentiometer.effect.c, pwm_to_analog(device_handle, MUX_2))  # effect 3
         bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
                 wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
-        decimal_value = binary_to_decimal(bits) / 15 * 127
+        decimal_value = round(binary_to_decimal(bits) / 15 * 127)
         if wf.static.get_state(device_handle, MUX_10):
             data.encoder.timing.attack = change_object(data.encoder.timing.attack, decimal_value)   # attack time
         else:
@@ -304,7 +309,122 @@ def write_data():
     channel = data.encoder.channel.value
     octave = midi.octaves[channel]
 
+    # send switch states
+    if data.switch.play.change:
+        midi.send(midi.CTRL_CHG, channel, [data.switch.play.message, data.switch.play.value])
+    if data.switch.record.change:
+        midi.send(midi.CTRL_CHG, channel, [data.switch.record.message, data.switch.record.value])
+
+    # send potentiometer states
+    if data.potentiometer.volume.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.volume.message, data.potentiometer.volume.value])
+    if data.potentiometer.filter.high.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.filter.high.message, data.potentiometer.filter.high.value])
+    if data.potentiometer.filter.middle.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.filter.middle.message, data.potentiometer.filter.middle.value])
+    if data.potentiometer.filter.low.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.filter.low.message, data.potentiometer.filter.low.value])
+    if data.potentiometer.effect.a.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.a.message, data.potentiometer.effect.a.value])
+    if data.potentiometer.effect.b.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.b.message, data.potentiometer.effect.b.value])
+    if data.potentiometer.effect.c.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.c.message, data.potentiometer.effect.c.value])
+    if data.potentiometer.effect.d.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.d.message, data.potentiometer.effect.d.value])
+    if data.potentiometer.effect.e.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.e.message, data.potentiometer.effect.e.value])
+    if data.potentiometer.effect.f.change:
+        midi.send(midi.CTRL_CHG, channel, [data.potentiometer.effect.f.message, data.potentiometer.effect.f.value])
     
+    # send rotary encoder states
+    if data.encoder.modulation.change:
+        midi.send(midi.CTRL_CHG, channel, [data.encoder.modulation.message, data.encoder.modulation.value])
+    if data.encoder.timing.attack.change:
+        midi.send(midi.CTRL_CHG, channel, [data.encoder.timing.attack.message, data.encoder.timing.attack.value])
+    if data.encoder.timing.release.change:
+        midi.send(midi.CTRL_CHG, channel, [data.encoder.timing.release.message, data.encoder.timing.release.value])
+
+    # send the piano keys
+    if data.key.c.change:
+        if data.key.c.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.c.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.c.message, note_velocity])
+    if data.key.cS.change:
+        if data.key.cS.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.cS.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.cS.message, note_velocity])
+    if data.key.d.change:
+        if data.key.d.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.d.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.d.message, note_velocity])
+    if data.key.dS.change:
+        if data.key.dS.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.dS.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.dS.message, note_velocity])
+    if data.key.e.change:
+        if data.key.e.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.e.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.e.message, note_velocity])
+    if data.key.f.change:
+        if data.key.f.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.f.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.f.message, note_velocity])
+    if data.key.fS.change:
+        if data.key.fS.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.fS.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.fS.message, note_velocity])
+    if data.key.g.change:
+        if data.key.g.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.g.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.g.message, note_velocity])
+    if data.key.gS.change:
+        if data.key.gS.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.gS.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.gS.message, note_velocity])
+    if data.key.a.change:
+        if data.key.a.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.a.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.a.message, note_velocity])
+    if data.key.aS.change:
+        if data.key.aS.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.aS.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.aS.message, note_velocity])
+    if data.key.b.change:
+        if data.key.b.value:
+            midi.send(midi.NOTE_ON, channel, [octave + data.key.b.message, note_velocity])
+        else:
+            midi.send(midi.NOTE_OFF, channel, [octave + data.key.b.message, note_velocity])
+    
+    # send drumpad values
+    if data.drumpad.a.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.a.message, data.drumpad.a.value])
+    if data.drumpad.b.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.b.message, data.drumpad.b.value])
+    if data.drumpad.c.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.c.message, data.drumpad.c.value])
+    if data.drumpad.d.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.d.message, data.drumpad.d.value])
+    if data.drumpad.e.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.e.message, data.drumpad.e.value])
+    if data.drumpad.f.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.f.message, data.drumpad.f.value])
+    if data.drumpad.g.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.g.message, data.drumpad.g.value])
+    if data.drumpad.h.change:
+        midi.send(midi.NOTE_ON, drum_channel, [data.drumpad.h.message, data.drumpad.h.value])
+
     return
 
 """-----------------------------------------------------------------------"""
@@ -376,6 +496,10 @@ except:
     pass
 
 """-----------------------------------"""
+
+# finish all notes
+for channel in range(0, 16):
+    midi.send(midi.CTRL_CHG, channel, [midi.ALL_SOUND_OFF])
 
 # turn off LEDs
 wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=0)
