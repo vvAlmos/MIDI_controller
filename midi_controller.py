@@ -1,4 +1,4 @@
-import WF_SDK as wf     # import WF instruments
+import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Started
 import MIDI as midi     # import MIDI commands and messages
 import FPGA as fpga     # import FPGA commands
 
@@ -49,11 +49,12 @@ LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue"
 """-----------------------------------------------------------------------"""
 
 # global variables
-class data:
+class controller_data:
     class switch:
         play = False
         record = False
     class potentiometer:
+        volume = 0
         class filter:
             high = 0
             middle = 0
@@ -97,6 +98,67 @@ class data:
 
 """-----------------------------------------------------------------------"""
 
+# auxiliary function
+def read_data(device_handle, mux_address):
+    # create variable for data
+    data = controller_data()
+
+    if mux_address == 0:
+        # MUX address = 0
+        data.switch.play = wf.static.get_state(device_handle, MUX_0)    # play / pause
+        data.switch.record = wf.static.get_state(device_handle, MUX_1)  # record / stop
+        data.potentiometer.volume = pwm_to_analog(device_handle, MUX_2)    # volume
+        bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
+                wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
+        data.encoder.channel = binary_to_decimal(bits)  # channel
+        data.key.c = wf.static.get_state(device_handle, MUX_7)  # piano key 1
+        data.key.e = wf.static.get_state(device_handle, MUX_8)  # piano key 5
+        data.key.gS = wf.static.get_state(device_handle, MUX_9) # piano key 9
+
+    elif mux_address == 1:
+        # MUX address = 1
+        data.potentiometer.filter.high = pwm_to_analog(device_handle, MUX_0)      # high filter
+        data.potentiometer.filter.middle = pwm_to_analog(device_handle, MUX_1)    # middle filter
+        data.potentiometer.filter.low = pwm_to_analog(device_handle, MUX_2)       # low filter
+        bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
+                wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
+        data.encoder.modulation = binary_to_decimal(bits) / 15 * 127  # modulation
+        data.key.d = wf.static.get_state(device_handle, MUX_7)   # piano key 2
+        data.key.fS = wf.static.get_state(device_handle, MUX_8)  # piano key 6
+        data.key.aS = wf.static.get_state(device_handle, MUX_9)  # piano key 10
+
+    elif mux_address == 2:
+        # MUX address = 2
+        data.potentiometer.effect.a = pwm_to_analog(device_handle, MUX_0)    # effect 1
+        data.potentiometer.effect.b = pwm_to_analog(device_handle, MUX_1)    # effect 2
+        data.potentiometer.effect.c = pwm_to_analog(device_handle, MUX_2)    # effect 3
+        bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
+                wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
+        decimal_value = binary_to_decimal(bits) / 15 * 127
+        if wf.static.get_state(device_handle, MUX_10):
+            data.encoder.timing.attack = decimal_value  # attack time
+        else:
+            data.encoder.timing.release = decimal_value # release time
+        data.key.cS = wf.static.get_state(device_handle, MUX_7)  # piano key 3
+        data.key.f = wf.static.get_state(device_handle, MUX_8)   # piano key 7
+        data.key.a = wf.static.get_state(device_handle, MUX_9)   # piano key 11
+
+    else:
+        # MUX address = 3
+        data.potentiometer.effect.d = pwm_to_analog(device_handle, MUX_0)    # effect 4
+        data.potentiometer.effect.f = pwm_to_analog(device_handle, MUX_1)    # effect 5
+        data.potentiometer.effect.c = pwm_to_analog(device_handle, MUX_2)    # effect 6
+        bits = [wf.static.get_state(device_handle, MUX_3), wf.static.get_state(device_handle, MUX_4),
+                wf.static.get_state(device_handle, MUX_5), wf.static.get_state(device_handle, MUX_6)]
+        data.encoder.octave = binary_to_decimal(bits)   # modulation
+        data.key.dS = wf.static.get_state(device_handle, MUX_7)  # piano key 4
+        data.key.g = wf.static.get_state(device_handle, MUX_8)   # piano key 8
+        data.key.b = wf.static.get_state(device_handle, MUX_9)   # piano key 12
+
+    return data
+
+"""-----------------------------------------------------------------------"""
+
 # connect to the device
 device_handle, device_name = wf.device.open("Analog Discovery Pro 3X50")
 
@@ -136,7 +198,10 @@ wf.wavegen.generate(device_handle, NEG_REF_CH, wf.wavegen.function.dc, -5)
 
 try:
     # initialize the iteration counter
-    iteration_cnt = 0
+    iteration_cnt = -1
+
+    # remember data from previous iteration
+    old_data = controller_data()
 
     # main loop
     while True:
@@ -149,13 +214,18 @@ try:
         wf.static.set_state(device_handle, MUX_ADDR_1, mux_address & 2)
 
         # get controller data
+        new_data = read_data(device_handle, mux_address)
 
         # send out MIDI data
+        
+
+        # save current controller data
+        old_data = new_data
 
         # set LED color
-        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["red"])
-        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["green"])
-        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel]["blue"])
+        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["red"])
+        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["green"])
+        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["blue"])
 
 except:
     # exit on Ctrl+C
