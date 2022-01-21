@@ -1,5 +1,6 @@
 import MIDI as midi
-from collections import namedtuple
+
+"""-----------------------------------------------------------------------"""
 
 # define connections
 # DIO
