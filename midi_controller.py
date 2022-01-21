@@ -49,52 +49,161 @@ LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue"
 """-----------------------------------------------------------------------"""
 
 # global variables
-class controller_data:
+class data:
     class switch:
-        play = False
-        record = False
+        class play:
+            value = False
+            change = False
+            message = midi.ON_OFF_SWC[0]
+        class record:
+            value = False
+            change = False
+            message = midi.ON_OFF_SWC[1]
     class potentiometer:
-        volume = 0
+        class volume:
+            value = 0
+            change = False
+            message = midi.VOLUME
         class filter:
-            high = 0
-            middle = 0
-            low = 0
+            class high:
+                value = 0
+                change = False
+                message = midi.CONTINUOUS_CTRL[0]
+            class middle:
+                value = 0
+                change = False
+                message = midi.CONTINUOUS_CTRL[1]
+            class low:
+                value = 0
+                change = False
+                message = midi.CONTINUOUS_CTRL[2]
         class effect:
-            a = 0
-            b = 0
-            c = 0
-            d = 0
-            e = 0
-            f = 0
+            class a:
+                value = 0
+                change = False
+                message = midi.EFFECT_CTRL[0]
+            class b:
+                value = 0
+                change = False
+                message = midi.EFFECT_CTRL[1]
+            class c:
+                value = 0
+                change = False
+                message = midi.SLIDER[0]
+            class d:
+                value = 0
+                change = False
+                message = midi.SLIDER[1]
+            class e:
+                value = 0
+                change = False
+                message = midi.SLIDER[2]
+            class f:
+                value = 0
+                change = False
+                message = midi.SLIDER[3]
     class encoder:
-        modulation = 0
-        channel = 0
-        octave = 0
+        class modulation:
+            value = 0
+            change = False
+            message = midi.MODULATION
+        class channel:
+            value = 0
+            change = False
+        class octave:
+            value = 0
+            change = False
         class timing:
-            attack = 0
-            release = 0
+            class attack:
+                value = 0
+                change = False
+                message = midi.ATTACK_TM
+            class release:
+                value = 0
+                change = False
+                message = midi.RELEASE_TM
     class key:
-        c = False
-        cS = False
-        d = False
-        dS = False
-        e = False
-        f = False
-        fS = False
-        g = False
-        gS = False
-        a = False
-        aS = False
-        b = False
+        class c:
+            value = False
+            change = False
+            message = midi.C
+        class cS:
+            value = False
+            change = False
+            message = midi.CS
+        class d:
+            value = False
+            change = False
+            message = midi.D
+        class dS:
+            value = False
+            change = False
+            message = midi.DS
+        class e:
+            value = False
+            change = False
+            message = midi.E
+        class f:
+            value = False
+            change = False
+            message = midi.F
+        class fS:
+            value = False
+            change = False
+            message = midi.FS
+        class g:
+            value = False
+            change = False
+            message = midi.G
+        class gS:
+            value = False
+            change = False
+            message = midi.GS
+        class a:
+            value = False
+            change = False
+            message = midi.A
+        class aS:
+            value = False
+            change = False
+            message = midi.AS
+        class b:
+            value = False
+            change = False
+            message = midi.B
     class drumpad:
-        a = 0
-        b = 0
-        c = 0
-        d = 0
-        e = 0
-        f = 0
-        g = 0
-        h = 0
+        class a:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.C
+        class b:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.CS
+        class c:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.D
+        class d:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.DS
+        class e:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.E
+        class f:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.F
+        class g:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.FS
+        class h:
+            value = 0
+            change = False
+            message = midi.LINE1_O + midi.G
 
 """-----------------------------------------------------------------------"""
 
@@ -103,7 +212,7 @@ def pwm_to_analog(device_handle, channel):
     # determine the duty cycle
     wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
     buffer, _ = wf.logic.record(device_handle, channel, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
-    return (sum(buffer) / 1000 * 127)
+    return round(sum(buffer) / 1000 * 127)
 
 """-----------------------------------------------------------------------"""
 
@@ -121,9 +230,6 @@ def binary_to_decimal(bits):
 
 # auxiliary function
 def read_data(device_handle, mux_address):
-    # create variable for data
-    data = controller_data()
-
     if mux_address == 0:
         # MUX address = 0
         data.switch.play = wf.static.get_state(device_handle, MUX_0)    # play / pause
@@ -176,7 +282,17 @@ def read_data(device_handle, mux_address):
         data.key.g = wf.static.get_state(device_handle, MUX_8)   # piano key 8
         data.key.b = wf.static.get_state(device_handle, MUX_9)   # piano key 12
 
-    return data
+    return
+
+"""-----------------------------------------------------------------------"""
+
+# auxiliary function
+def write_data():
+    # define octave
+    octave = midi.octaves[data.encoder.channel.value]
+
+    
+    return
 
 """-----------------------------------------------------------------------"""
 
@@ -221,9 +337,6 @@ try:
     # initialize the iteration counter
     iteration_cnt = -1
 
-    # remember data from previous iteration
-    old_data = controller_data()
-
     # main loop
     while True:
         # increment the iteration counter
@@ -235,18 +348,15 @@ try:
         wf.static.set_state(device_handle, MUX_ADDR_1, mux_address & 2)
 
         # get controller data
-        new_data = read_data(device_handle, mux_address)
+        read_data(device_handle, mux_address)
 
         # send out MIDI data
-        
-
-        # save current controller data
-        old_data = new_data
+        write_data()
 
         # set LED color
-        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["red"])
-        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["green"])
-        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[new_data.encoder.channel]["blue"])
+        wf.pattern.generate(device_handle, LED_R, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel.value]["red"])
+        wf.pattern.generate(device_handle, LED_G, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel.value]["green"])
+        wf.pattern.generate(device_handle, LED_B, wf.pattern.function.pulse, LED_frequency, duty_cycle=LED_duty[data.encoder.channel.value]["blue"])
 
 except:
     # exit on Ctrl+C
