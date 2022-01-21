@@ -1,7 +1,6 @@
 import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Started
 import MIDI as midi     # import MIDI commands and messages
 import FPGA as fpga
-from MIDI.message import CTRL_CHG     # import FPGA commands
 
 """-----------------------------------------------------------------------"""
 
