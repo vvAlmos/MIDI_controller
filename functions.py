@@ -6,6 +6,7 @@ import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Star
 import MIDI as midi     # import MIDI commands and messages
 
 from parameters import *
+from data_structures import controller_data, data_object
 
 """-----------------------------------------------------------------------"""
 
@@ -31,7 +32,7 @@ def binary_to_decimal(bits):
 """-----------------------------------------------------------------------"""
 
 # auxiliary function
-def change_object(object, value):
+def change_object(object: data_object, value) -> data_object:
     # change controller data parameter
     if object.value != value:
         object.value = value
@@ -43,7 +44,7 @@ def change_object(object, value):
 """-----------------------------------------------------------------------"""
 
 # main function
-def read_digital_data(device_handle, data, mux_address):
+def read_digital_data(device_handle, data: controller_data, mux_address) -> controller_data:
     if mux_address == 0:
         # MUX address = 0
         temp = 127 if wf.static.get_state(device_handle, MUX_0) else 0
@@ -103,7 +104,7 @@ def read_digital_data(device_handle, data, mux_address):
 """-----------------------------------------------------------------------"""
 
 # main function
-def read_analog_data(device_handle, data):
+def read_analog_data(device_handle, data: controller_data) -> controller_data:
     # create and get buffers
     buffers = [[], [], [], []]
     buffers[0] = wf.scope.record(device_handle, DRUM_15)
@@ -150,7 +151,7 @@ def read_analog_data(device_handle, data):
 """-----------------------------------------------------------------------"""
 
 # main function
-def write_data(data):
+def write_data(data: controller_data):
     # define channel and octave
     channel = data.encoder.channel.value
     octave = midi.octaves[channel]
