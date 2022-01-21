@@ -4,10 +4,6 @@ import MIDI as midi
 
 class data_object:
     # object template
-    value = 0
-    change = False
-    message = None
-
     def __init__(self, message, change=False, value=0):
         self.value = value
         self.change = change
