@@ -2,7 +2,7 @@
 Custom data structures are defined in this file
 """
 
-import MIDI as midi
+import MIDI as midi     # import MIDI commands and messages
 
 """-----------------------------------------------------------------------"""
 

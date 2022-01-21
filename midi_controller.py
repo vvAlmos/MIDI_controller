@@ -4,7 +4,7 @@ The main wrapper of the MIDI controller control script
 
 import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Started
 import MIDI as midi     # import MIDI commands and messages
-import FPGA as fpga
+import FPGA as fpga     # import FPGA control functions
 
 from data_structures import controller_data, supplies_state
 from functions import read_digital_data, read_analog_data, write_data

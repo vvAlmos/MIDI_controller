@@ -2,8 +2,9 @@
 The functions used in the main wrapper and the auxiliary functions are defined in this file
 """
 
-import WF_SDK as wf
-import MIDI as midi
+import WF_SDK as wf     # https://github.com/Digilent/WaveForms-SDK-Getting-Started
+import MIDI as midi     # import MIDI commands and messages
+
 from parameters import *
 
 """-----------------------------------------------------------------------"""
