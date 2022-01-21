@@ -99,6 +99,27 @@ class controller_data:
 """-----------------------------------------------------------------------"""
 
 # auxiliary function
+def pwm_to_analog(device_handle, channel):
+    # determine the duty cycle
+    wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
+    buffer, _ = wf.logic.record(device_handle, channel, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
+    return (sum(buffer) / 1000 * 127)
+
+"""-----------------------------------------------------------------------"""
+
+def binary_to_decimal(bits):
+    # convert boolean list to a number: LSB->MSB
+    bits = bits[::-1]
+    value = 0
+    for bit in bits:
+        value <<= 1
+        if bit:
+            value |= 1
+    return value
+
+"""-----------------------------------------------------------------------"""
+
+# auxiliary function
 def read_data(device_handle, mux_address):
     # create variable for data
     data = controller_data()
