@@ -41,6 +41,10 @@ LED_frequency = 1e03    # in Hz
 PWM_frequency = 100e03  # in Hz
 note_velocity = 127     # between 0 and 127
 drum_channel = midi.CH10
+class analog_tresholds:
+    low = -0.2  # in V
+    high = 0.2  # in V
+    clamp = 4.7 # in V
 # different LED colors for different MIDI channels
 LED_duty = [{"red": 100, "green": 0, "blue": 0}, {"red": 0, "green": 100, "blue": 0}, {"red": 0, "green": 0, "blue": 100},
             {"red": 100, "green": 100, "blue": 0}, {"red": 100, "green": 0, "blue": 100}, {"red": 0, "green": 100, "blue": 100},
@@ -213,7 +217,6 @@ class data:
 # auxiliary function
 def pwm_to_analog(device_handle, channel):
     # determine the duty cycle
-    wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
     buffer, _ = wf.logic.record(device_handle, channel, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
     return round(sum(buffer) / 1000 * 127)
 
@@ -244,7 +247,7 @@ def change_object(object, value):
 """-----------------------------------------------------------------------"""
 
 # auxiliary function
-def read_data(device_handle, mux_address):
+def read_digital_data(device_handle, mux_address):
     if mux_address == 0:
         # MUX address = 0
         temp = 127 if wf.static.get_state(device_handle, MUX_0) else 0
@@ -299,6 +302,53 @@ def read_data(device_handle, mux_address):
         data.key.g = change_object(data.key.g, wf.static.get_state(device_handle, MUX_8))    # piano key 8
         data.key.b = change_object(data.key.b, wf.static.get_state(device_handle, MUX_9))    # piano key 12
 
+    return
+
+"""-----------------------------------------------------------------------"""
+
+# auxiliary function
+def read_analog_data(device_handle):
+    # create and get buffers
+    buffers = [[], [], [], []]
+    buffers[0] = wf.scope.record(device_handle, DRUM_15)
+    buffers[1] = wf.scope.record(device_handle, DRUM_26)
+    buffers[2] = wf.scope.record(device_handle, DRUM_37)
+    buffers[3] = wf.scope.record(device_handle, DRUM_48)
+
+    # find negative and positive peaks
+    peaks = [0, 0, 0, 0, 0, 0, 0, 0]
+    index = -1
+    for buffer in buffers:
+        index += 1
+
+        highest = analog_tresholds.low
+        lowest = analog_tresholds.high
+        for element in buffer:
+            if element > analog_tresholds.high and element > highest:
+                highest = element
+            elif element < analog_tresholds.low and element < lowest:
+                lowest = element
+        
+        # save peaks
+        if highest > analog_tresholds.high:
+            peaks[index] = highest
+        if lowest < analog_tresholds.low:
+            peaks[index + 4] = (-1) * lowest
+
+    # convert and round values
+    for peak in peaks:
+        peak = round(peak / analog_tresholds.clamp * 127)
+
+    # change data
+    data.drumpad.a = change_object(data.drumpad.a, peaks[0])
+    data.drumpad.b = change_object(data.drumpad.b, peaks[1])
+    data.drumpad.c = change_object(data.drumpad.c, peaks[2])
+    data.drumpad.d = change_object(data.drumpad.d, peaks[3])
+    data.drumpad.e = change_object(data.drumpad.e, peaks[4])
+    data.drumpad.f = change_object(data.drumpad.f, peaks[5])
+    data.drumpad.g = change_object(data.drumpad.g, peaks[6])
+    data.drumpad.h = change_object(data.drumpad.h, peaks[7])
+    
     return
 
 """-----------------------------------------------------------------------"""
@@ -453,7 +503,7 @@ wf.static.set_state(device_handle, MUX_ADDR_1, False)
 wf.scope.open(device_handle)
 
 # initialize the logic analyzer
-wf.logic.open(device_handle)
+wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
 
 # turn on the power supply
 wf.supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
@@ -481,7 +531,8 @@ try:
         wf.static.set_state(device_handle, MUX_ADDR_1, mux_address & 2)
 
         # get controller data
-        read_data(device_handle, mux_address)
+        read_digital_data(device_handle, mux_address)
+        read_analog_data(device_handle)
 
         # send out MIDI data
         write_data()
