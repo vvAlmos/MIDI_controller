@@ -221,6 +221,7 @@ def pwm_to_analog(device_handle, channel):
 
 """-----------------------------------------------------------------------"""
 
+# auxiliary function
 def binary_to_decimal(bits):
     # convert boolean list to a number: LSB->MSB
     bits = bits[::-1]
@@ -245,7 +246,7 @@ def change_object(object, value):
 
 """-----------------------------------------------------------------------"""
 
-# auxiliary function
+# main function
 def read_digital_data(device_handle, mux_address):
     if mux_address == 0:
         # MUX address = 0
@@ -305,7 +306,7 @@ def read_digital_data(device_handle, mux_address):
 
 """-----------------------------------------------------------------------"""
 
-# auxiliary function
+# main function
 def read_analog_data(device_handle):
     # create and get buffers
     buffers = [[], [], [], []]
@@ -352,7 +353,7 @@ def read_analog_data(device_handle):
 
 """-----------------------------------------------------------------------"""
 
-# auxiliary function
+# main function
 def write_data():
     # define channel and octave
     channel = data.encoder.channel.value
@@ -505,7 +506,12 @@ wf.scope.open(device_handle)
 wf.logic.open(device_handle, sampling_frequency=(1000 * PWM_frequency), buffer_size=1000)
 
 # turn on the power supply
-wf.supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+class supplies_state:
+    device_name = device_name
+    master_state = True
+    state = True
+    voltage = 3.3
+wf.supplies.switch(device_handle, supplies_state)
 
 # start generating the reference signals
 # PWM reference
@@ -562,7 +568,8 @@ wf.pattern.close(device_handle)
 wf.logic.close(device_handle)
 wf.scope.close(device_handle)
 wf.static.close(device_handle)
-wf.supplies.switch(device_handle, device_name, False, False, False, 0, 0)
+supplies_state.master_state = False
+wf.supplies.switch(device_handle, supplies_state)
 wf.supplies.close(device_handle)
 
 # close raveloxmidi
